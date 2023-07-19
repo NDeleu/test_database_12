@@ -39,5 +39,7 @@ def initialize_database():
 
     return engine, Base, session
 
+# TODO: Maintenant que init db est sous fonction, l utiliser sous cette forme ds le code dc modif all code pr eviter prob ac variable global ci dessous
+
 # Exemple d'utilisation de la fonction initialize_database()
 engine, Base, session = initialize_database()

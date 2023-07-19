@@ -73,6 +73,8 @@ def db_session(postgresql):
         drop_database(db_url)
 
 
+# TODO: une fois le code refais ac la fonction init db, on regarde si ça fonctionne tj ac l init db du test puis si c est ok on cree tous les tests
+
 def test_database_connection(db_session):
     # Vérifiez si la connexion à la base de données fonctionne
 
