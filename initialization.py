@@ -13,6 +13,7 @@ from models.class_models.administrator import Administrator
 from models.class_models.article import Article
 from models.class_models.client import Client
 from views.menu_view import display_message
+from sqlalchemy_utils import create_database, database_exists
 import re
 
 
@@ -30,9 +31,14 @@ def init_engine_bdd():
         import pymysql
         db_url = f'{database_type}+pymysql://{username}:{password}@{host}:3306/{database_name}'
         engine = create_engine(db_url, encoding='utf8')
-    else:
+    elif database_type == "postgresql":
         db_url = f'{database_type}://{username}:{password}@{host}:5432/{database_name}'
         engine = create_engine(db_url)
+    else:
+        engine = None
+
+    if not database_exists(engine.url):
+        create_database(engine.url)
 
     return engine
 
@@ -48,7 +54,7 @@ def try_connect_bdd():
 
 
 def check_config_ini_exist():
-    if os.path.exists('config.ini'):
+    if os.path.exists('../../Desktop/config.ini'):
         return True
     else:
         display_message("The config.ini file does not exist. Please verify the integrity of the repository and retry.")
@@ -114,7 +120,7 @@ def set_sql_config_ini():
     config.set('sql', 'host', 'localhost')
     config.set('sql', 'database_name', database_name_choice)
 
-    with open('config.ini', 'w') as configfile:
+    with open('../../Desktop/config.ini', 'w') as configfile:
         config.write(configfile)
 
 
@@ -137,7 +143,7 @@ def set_jwt_secret():
     jwt_secret_key = secrets.token_hex(32)
     config.set('jwt', 'secret_key_jwt', jwt_secret_key)
 
-    with open('config.ini', 'w') as configfile:
+    with open('../../Desktop/config.ini', 'w') as configfile:
         config.write(configfile)
 
 
@@ -203,7 +209,7 @@ def check_if_table_empty(table_name):
 
 def check_version_file_exist():
     versions_folder_path = 'models/database_models/migrations/versions'
-    end_with_file = '_first_commit'
+    end_with_file = '_first_commit.py'
 
     files = [file for file in os.listdir(versions_folder_path) if file.endswith(end_with_file)]
 
@@ -278,33 +284,33 @@ def initialization_bdd():
                     sys.exit(1)
                 else:
                     set_url_alembic_ini()
-                if check_version_file_exist():
-                    if not check_tables_exist():
-                        alembic_cfg = Config('alembic.ini')
-                        command.upgrade(alembic_cfg, 'head')
-                        if not check_tables_exist():
-                            display_message("An error has occurred, please check the status of your database and try again.")
-                            sys.exit(1)
-                    else:
-                        # Database with Alembic already configured
-                        pass
-                else:
-                    alembic_cfg = Config('alembic.ini')
-                    command.revision(alembic_cfg, autogenerate=True, message="first commit")
-                    if check_version_file_exist():
-                        if not check_tables_exist():
-                            alembic_cfg = Config('alembic.ini')
-                            command.upgrade(alembic_cfg, 'head')
-                            if not check_tables_exist():
-                                display_message("An error has occurred, please check the status of your database and try again")
-                    else:
-                        display_message("The migration file could not be created. Please verify the integrity of the repository and retry.")
-                        sys.exit(1)
-                if check_if_table_empty("administrators"):
-                    create_first_administrator()
-                else:
-                    # An administrator already exists
-                    pass
+    if check_version_file_exist():
+        if not check_tables_exist():
+            alembic_cfg = Config('alembic.ini')
+            command.upgrade(alembic_cfg, 'head')
+            if not check_tables_exist():
+                display_message("An error has occurred, please check the status of your database and try again.")
+                sys.exit(1)
+        else:
+            # Database with Alembic already configured
+            pass
+    else:
+        alembic_cfg = Config('alembic.ini')
+        command.revision(alembic_cfg, autogenerate=True, message="first commit")
+        if check_version_file_exist():
+            if not check_tables_exist():
+                alembic_cfg = Config('alembic.ini')
+                command.upgrade(alembic_cfg, 'head')
+                if not check_tables_exist():
+                    display_message("An error has occurred, please check the status of your database and try again")
+        else:
+            display_message("The migration file could not be created. Please verify the integrity of the repository and retry.")
+            sys.exit(1)
+    if check_if_table_empty("administrators"):
+        create_first_administrator()
+    else:
+        # An administrator already exists
+        pass
     display_message("Initialization already configured.")
 
 
