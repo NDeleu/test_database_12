@@ -1,5 +1,5 @@
 import os
-import click
+import re
 from models.database_models.database import session
 from models.class_models.administrator import Administrator
 from models.class_models.client import Client
@@ -7,10 +7,10 @@ from datetime import datetime, timedelta
 import jwt
 from configparser import ConfigParser
 from views.menu_view import display_message
-
-
+import click
 script_dir = os.path.dirname(os.path.abspath(__file__))
-root_dir = os.path.dirname(script_dir)
+controllers_dir = os.path.dirname(script_dir)
+root_dir = os.path.dirname(controllers_dir)
 config_file = os.path.join(root_dir, 'config.ini')
 
 config = ConfigParser()
@@ -19,10 +19,24 @@ config.read(config_file)
 SECRET_KEY = config.get('jwt', 'secret_key_jwt')
 
 
-@click.command()
-def login():
-    email = click.prompt("Email", type=click.STRING)
-    password = click.prompt("Password", type=click.STRING, hide_input=True)
+def login_set():
+    while True:
+        email = click.prompt("Email", type=click.STRING)
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+            display_message(
+                "L'adresse e-mail n'est pas valide. Veuillez réessayer.")
+        else:
+            break
+    while True:
+        password = click.prompt("Password", type=click.STRING, hide_input=True)
+        if re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
+            display_message(
+                "Password should not contain special characters. Try again.")
+        elif len(password) < 6:
+            display_message(
+                "Password should be at least 6 characters long. Try again.")
+        else:
+            break
 
     administrator = session.query(Administrator).filter_by(email=email).first()
     client = session.query(Client).filter_by(email=email).first()
@@ -157,8 +171,7 @@ def login_required(func):
     return wrapper
 
 
-@click.command()
-def logout():
+def logout_set():
     user = get_logged_in_user()
 
     if isinstance(user, Administrator):

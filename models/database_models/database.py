@@ -54,7 +54,6 @@ def db_session(sql_database_info):
 
     # Créez un moteur SQLAlchemy et une session
     engine = create_engine(db_url)
-
     Session = sessionmaker(bind=engine)
     session = Session()
 

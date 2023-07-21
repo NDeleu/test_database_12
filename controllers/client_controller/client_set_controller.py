@@ -1,24 +1,61 @@
-import click
 import re
+import click
 from models.database_models.database import session
 from models.class_models.client import Client
 from models.class_models.administrator import Administrator
-from controllers.auth_controller import login_required_admin
+from controllers.auth_controller.auth_set_controller import login_required_admin
 from views.client_view import display_client
 from views.menu_view import display_message
 
 
-@click.group()
-def client():
-    pass
-
-
 @login_required_admin
-def create_client(surname, lastname, age, email, administrator_id, password):
-    try:
-        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
-            raise ValueError("Email address is not valid")
+def create_client():
+    while True:
+        surname = click.prompt("Surname", type=click.STRING)
+        if re.search(r'[!@#$%^&*(),.?":{}|<>]', surname):
+            display_message("Surname should not contain special characters. Try again.")
+        else:
+            break
 
+    while True:
+        lastname = click.prompt("Lastname", type=click.STRING)
+        if re.search(r'[!@#$%^&*(),.?":{}|<>]', lastname):
+            display_message("Lastname should not contain special characters. Try again.")
+        else:
+            break
+
+    while True:
+        try:
+            age = click.prompt("Age", type=click.INT)
+            break
+        except click.BadParameter:
+            display_message("Invalid input. Please enter a valid age.")
+
+    while True:
+        email = click.prompt("Email", type=click.STRING)
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+            display_message("Email address is not valid. Please try again.")
+        else:
+            break
+
+    while True:
+        try:
+            administrator_id = click.prompt("ID Administrator", type=click.INT)
+            break
+        except click.BadParameter:
+            display_message("Invalid input. Please enter a valid ID.")
+
+    while True:
+        password = click.prompt("Password", type=click.STRING, hide_input=True)
+        if re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
+            display_message(
+                "Password should not contain special characters. Try again.")
+        elif len(password) < 6:
+            display_message(
+                "Password should be at least 6 characters long. Try again.")
+        else:
+            break
+    try:
         administrator = session.query(Administrator).filter_by(id=administrator_id).first()
         if administrator:
             client = Client.create(surname, lastname, age, email, administrator, password)
@@ -61,36 +98,3 @@ def delete_client(client_id):
         display_message("Client deleted")
     else:
         display_message("Client not found")
-
-
-@client.command()
-@click.argument('surname', type=click.STRING)
-@click.argument('lastname', type=click.STRING)
-@click.argument('age', type=click.INT)
-@click.argument('email', type=click.STRING)
-@click.argument('administrator_id', type=click.INT)
-@click.argument('password', type=click.STRING)
-def create(surname, lastname, age, email, administrator_id, password):
-    create_client(surname, lastname, age, email, administrator_id, password)
-
-
-@client.command()
-@click.argument('client_id', type=int)
-def read(client_id):
-    read_client(client_id)
-
-
-@client.command()
-@click.argument('client_id', type=int)
-@click.option('--surname', default=None)
-@click.option('--lastname', default=None)
-@click.option('--age', type=int, default=None)
-@click.option('--email', default=None)
-def update(client_id, surname, lastname, age, email):
-    update_client(client_id, surname, lastname, age, email)
-
-
-@client.command()
-@click.argument('client_id', type=int)
-def delete(client_id):
-    delete_client(client_id)

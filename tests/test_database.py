@@ -42,7 +42,7 @@ def postgresql():
 @pytest.fixture
 def db_session(postgresql):
     """Session for SQLAlchemy."""
-    from models.database_models.database import Base
+    from models import Base
 
     # Créez la base de données temporaire en ajoutant "_test" au nom de la base de données existante
     test_db_name = f"{postgresql['dbname']}_test"
@@ -72,8 +72,6 @@ def db_session(postgresql):
     if database_exists(db_url):
         drop_database(db_url)
 
-
-# TODO: une fois le code refais ac la fonction init db, on regarde si ça fonctionne tj ac l init db du test puis si c est ok on cree tous les tests
 
 def test_database_connection(db_session):
     # Vérifiez si la connexion à la base de données fonctionne

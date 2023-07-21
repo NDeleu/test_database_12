@@ -27,15 +27,15 @@ def ask_to_create_admin():
 def form_first_admin():
     while True:
         surname = str(input(display_message("Enter the surname of the first administrator: ")))
-        if surname.strip() == "":
-            display_message("Surname cannot be empty. Please try again.")
+        if not surname.isalpha():
+            display_message("Surname should only contain alphabetic characters. Please try again.")
         else:
             break
 
     while True:
         lastname = str(input(display_message("Enter the lastname of the first administrator: ")))
-        if lastname.strip() == "":
-            display_message("Lastname cannot be empty. Please try again.")
+        if not lastname.isalpha():
+            display_message("Lastname should only contain alphabetic characters. Please try again.")
         else:
             break
 
@@ -57,6 +57,8 @@ def form_first_admin():
         password = str(input(display_message("Enter the password for the first administrator: ")))
         if len(password) < 6:
             display_message("Password should be at least 6 characters long. Please try again.")
+        elif not password.isalnum():
+            display_message("Password should only contain alphanumeric characters. Please try again.")
         else:
             break
 
