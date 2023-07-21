@@ -1,8 +1,8 @@
 from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy import text
-from models.database_models.database import Base, session
 from passlib.hash import bcrypt
+from models.database_models.database import Base, session
 
 
 class Administrator(Base):

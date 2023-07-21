@@ -1,11 +1,15 @@
 import os
 import sys
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 from configparser import ConfigParser
-from sqlalchemy_utils import database_exists, create_database
+from sqlalchemy_utils import create_database, database_exists
 
-def initialize_database():
+from views.menu_view import display_message
+
+
+def sql_database():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     models_dir = os.path.dirname(script_dir)
     root_dir = os.path.dirname(models_dir)
@@ -14,32 +18,50 @@ def initialize_database():
     config = ConfigParser()
     config.read(config_file)
 
-    database_type = config.get('sql', 'database_type')
+    driver = config.get('sql', 'database_type')
     username = config.get('sql', 'username')
     password = config.get('sql', 'password')
-    host = config.get('sql', 'host')
     database_name = config.get('sql', 'database_name')
 
-    if database_type == "mysql":
-        import pymysql
-        db_url = f'{database_type}+pymysql://{username}:{password}@{host}:3306/{database_name}'
-        engine = create_engine(db_url, encoding='utf8')
-    elif database_type == "postgresql":
-        db_url = f'{database_type}://{username}:{password}@{host}:5432/{database_name}'
-        engine = create_engine(db_url)
-    else:
-        engine = None
+    info = {
+        'database_type': driver,
+        'username': username,
+        'password': password,
+        'host': 'localhost',
+        'database_name': database_name,
+    }
+
+    return info
+
+
+def db_session(sql_database_info):
 
     Base = declarative_base()
+
+    if sql_database_info['database_type'] == "mysql":
+        import pymysql
+        db_url = f"{sql_database_info['database_type']}+pymysql://{sql_database_info['username']}:{sql_database_info['password']}@{sql_database_info['host']}:3306/{sql_database_info['database_name']}"
+    elif sql_database_info['database_type'] == "postgresql":
+        db_url = f"{sql_database_info['database_type']}://{sql_database_info['username']}:{sql_database_info['password']}@{sql_database_info['host']}:5432/{sql_database_info['database_name']}"
+    else:
+        display_message(
+            "Database not found. Please check your configuration and retry.")
+        sys.exit(1)
+
+    # Vérifiez si la base de données existe et créez-la si nécessaire
+    if not database_exists(db_url):
+        create_database(db_url)
+
+    # Créez un moteur SQLAlchemy et une session
+    engine = create_engine(db_url)
 
     Session = sessionmaker(bind=engine)
     session = Session()
 
-    # Autres opérations de configuration ou d'initialisation de la base de données
+    return session, Base, engine
 
-    return engine, Base, session
 
-# TODO: Maintenant que init db est sous fonction, l utiliser sous cette forme ds le code dc modif all code pr eviter prob ac variable global ci dessous
+session, Base, engine = db_session(sql_database())
 
-# Exemple d'utilisation de la fonction initialize_database()
-engine, Base, session = initialize_database()
+
+
